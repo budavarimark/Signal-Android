@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.notifications.v2
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
@@ -16,6 +17,7 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.LocusIdCompat
 import androidx.core.graphics.drawable.IconCompat
 import org.signal.core.util.PendingIntentFlags.mutable
+import org.thoughtcrime.securesms.CryptManager
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.conversation.ConversationIntents
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -188,6 +190,7 @@ sealed class NotificationBuilder(protected val context: Context) {
   private class NotificationBuilderCompat(context: Context) : NotificationBuilder(context) {
     val builder: NotificationCompat.Builder = NotificationCompat.Builder(context, NotificationChannels.getMessagesChannel(context))
 
+    @SuppressLint("NewApi")
     override fun addActions(replyMethod: ReplyMethod, conversation: NotificationConversation) {
       val extender: NotificationCompat.WearableExtender = NotificationCompat.WearableExtender()
 

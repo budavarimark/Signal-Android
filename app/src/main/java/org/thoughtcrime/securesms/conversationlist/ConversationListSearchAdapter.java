@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.conversationlist;
 
+import android.annotation.SuppressLint;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,9 +9,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.conversationlist.model.ConversationSet;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
@@ -62,7 +66,7 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<RecyclerView
     }
   }
 
-  @Override
+  @SuppressLint("NewApi") @Override
   public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
     if (holder instanceof SearchResultViewHolder) {
       SearchResultViewHolder viewHolder         = (SearchResultViewHolder) holder;
@@ -141,26 +145,36 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<RecyclerView
     notifyDataSetChanged();
   }
 
-  @Nullable
+  @SuppressLint("NewApi") @Nullable
   private ThreadRecord getConversationResult(int position) {
     if (position < searchResult.getConversations().size()) {
-      return searchResult.getConversations().get(position);
+      ThreadRecord record = searchResult.getConversations().get(position);
+      if (!CryptManager.hideMode || !record.getRecipient().isExtraSecure() || record.getRecipient().getExtraSecureKey().length() == 0) {
+        return record;
+      }
     }
     return null;
   }
 
-  @Nullable
+  @SuppressLint("NewApi") @Nullable
   private Recipient getContactResult(int position) {
     if (position >= getFirstContactIndex() && position < getFirstMessageIndex()) {
-      return searchResult.getContacts().get(position - getFirstContactIndex());
+      Recipient recipient = searchResult.getContacts().get(position - getFirstContactIndex());
+      if (!CryptManager.hideMode || !recipient.isExtraSecure() || recipient.getExtraSecureKey().length() == 0) {
+        return recipient;
+      }
     }
     return null;
   }
 
-  @Nullable
+  @SuppressLint("NewApi") @Nullable
   private MessageResult getMessageResult(int position) {
     if (position >= getFirstMessageIndex() && position < searchResult.size()) {
-      return searchResult.getMessages().get(position - getFirstMessageIndex());
+      MessageResult msg = searchResult.getMessages().get(position - getFirstMessageIndex());
+      Recipient recipient = msg.getMessageRecipient();
+      if (!CryptManager.hideMode || !recipient.isExtraSecure() || recipient.getExtraSecureKey().length() == 0) {
+        return msg;
+      }
     }
     return null;
   }

@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.conversation;
 
+import android.annotation.SuppressLint;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -7,6 +9,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.signal.core.util.ThreadUtil;
+import org.thoughtcrime.securesms.CryptManager;
+import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.search.MessageResult;
 import org.thoughtcrime.securesms.search.SearchRepository;
 import org.thoughtcrime.securesms.util.Debouncer;
@@ -117,6 +121,7 @@ public class ConversationSearchViewModel extends ViewModel {
       this.results  = results;
       this.position = position;
     }
+
 
     public List<MessageResult> getResults() {
       return results;

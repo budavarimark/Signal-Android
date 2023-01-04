@@ -150,6 +150,8 @@
             android:value=".MainActivity" />
     </activity>
 
+    <activity android:name=".components.settings.WebActivity" />
+
     <activity android:name=".PromptMmsActivity"
               android:label="Configure MMS Settings"
               android:windowSoftInputMode="stateUnchanged"

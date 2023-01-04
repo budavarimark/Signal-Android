@@ -26,7 +26,7 @@ public class SignalServiceDataMessage {
 
   private final long                                    timestamp;
   private final Optional<List<SignalServiceAttachment>> attachments;
-  private final Optional<String>                        body;
+  public Optional<String>                        body;
   private final Optional<SignalServiceGroupV2>          group;
   private final Optional<byte[]>                        profileKey;
   private final boolean                                 endSession;

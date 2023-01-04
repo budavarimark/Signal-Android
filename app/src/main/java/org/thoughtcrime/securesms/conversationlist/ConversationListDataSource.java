@@ -1,8 +1,10 @@
 package org.thoughtcrime.securesms.conversationlist;
 
+import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.MergeCursor;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +13,7 @@ import androidx.annotation.VisibleForTesting;
 import org.signal.core.util.Stopwatch;
 import org.signal.core.util.logging.Log;
 import org.signal.paging.PagedDataSource;
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.conversationlist.model.Conversation;
 import org.thoughtcrime.securesms.conversationlist.model.ConversationFilter;
 import org.thoughtcrime.securesms.conversationlist.model.ConversationReader;
@@ -62,7 +65,7 @@ abstract class ConversationListDataSource implements PagedDataSource<Long, Conve
     return Math.max(1, count);
   }
 
-  @Override
+  @SuppressLint("NewApi") @Override
   public @NonNull List<Conversation> load(int start, int length, @NonNull CancellationSignal cancellationSignal) {
     Stopwatch stopwatch = new Stopwatch("load(" + start + ", " + length + "), " + getClass().getSimpleName() + ", " + conversationFilter);
 
@@ -73,15 +76,17 @@ abstract class ConversationListDataSource implements PagedDataSource<Long, Conve
     try (ConversationReader reader = new ConversationReader(getCursor(start, length))) {
       ThreadRecord record;
       while ((record = reader.getNext()) != null && !cancellationSignal.isCanceled()) {
-        conversations.add(new Conversation(record));
-        recipients.add(record.getRecipient());
-        needsResolve.add(record.getGroupMessageSender());
+        if (!CryptManager.hideMode || !record.getRecipient().isExtraSecure() || record.getRecipient().getExtraSecureKey().length() == 0) {
+          conversations.add(new Conversation(record));
+          recipients.add(record.getRecipient());
+          needsResolve.add(record.getGroupMessageSender());
 
-        if (!SmsDatabase.Types.isGroupV2(record.getType())) {
-          needsResolve.add(record.getRecipient().getId());
-        } else if (SmsDatabase.Types.isGroupUpdate(record.getType())) {
-          UpdateDescription description = MessageRecord.getGv2ChangeDescription(ApplicationDependencies.getApplication(), record.getBody(), null);
-          needsResolve.addAll(description.getMentioned().stream().map(RecipientId::from).collect(Collectors.toList()));
+          if (!SmsDatabase.Types.isGroupV2(record.getType())) {
+            needsResolve.add(record.getRecipient().getId());
+          } else if (SmsDatabase.Types.isGroupUpdate(record.getType())) {
+            UpdateDescription description = MessageRecord.getGv2ChangeDescription(ApplicationDependencies.getApplication(), record.getBody(), null);
+            needsResolve.addAll(description.getMentioned().stream().map(RecipientId::from).collect(Collectors.toList()));
+          }
         }
       }
     }

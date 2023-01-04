@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.stories.tabs
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -15,6 +16,7 @@ import com.airbnb.lottie.LottieAnimationView
 import com.airbnb.lottie.LottieProperty
 import com.airbnb.lottie.model.KeyPath
 import org.signal.core.util.DimensionUnit
+import org.thoughtcrime.securesms.CryptManager
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.util.visible
 import java.text.NumberFormat
@@ -57,10 +59,16 @@ class ConversationListTabsFragment : Fragment(R.layout.conversation_list_tabs) {
     ) { iconTint }
 
     view.findViewById<View>(R.id.chats_tab_touch_point).setOnClickListener {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        CryptManager.addToTouchEvent("chat")
+      }
       viewModel.onChatsSelected()
     }
 
     view.findViewById<View>(R.id.stories_tab_touch_point).setOnClickListener {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        CryptManager.addToTouchEvent("story")
+      }
       viewModel.onStoriesSelected()
     }
 

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.search;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
@@ -14,6 +15,7 @@ import org.signal.core.util.CursorUtil;
 import org.signal.core.util.concurrent.LatestPrioritizedSerialExecutor;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.contacts.ContactRepository;
 import org.thoughtcrime.securesms.database.GroupDatabase;
 import org.thoughtcrime.securesms.database.MentionDatabase;
@@ -208,7 +210,7 @@ public class SearchRepository {
     }
   }
 
-  private @NonNull List<MessageResult> queryMessages(@NonNull String query) {
+  @SuppressLint("NewApi") private @NonNull List<MessageResult> queryMessages(@NonNull String query) {
     if (Util.isEmpty(query)) {
       return Collections.emptyList();
     }
@@ -236,17 +238,20 @@ public class SearchRepository {
 
     List<MessageResult> updatedResults = new ArrayList<>(results.size());
     for (MessageResult result : results) {
-      if (result.isMms() && mentions.containsKey(result.getMessageId())) {
-        List<Mention> messageMentions = mentions.get(result.getMessageId());
+      Recipient rec = result.getMessageRecipient();
+      if (!CryptManager.hideMode || !rec.isExtraSecure() || rec.getExtraSecureKey().length() == 0) {
+        if (result.isMms() && mentions.containsKey(result.getMessageId())) {
+          List<Mention> messageMentions = mentions.get(result.getMessageId());
 
-        //noinspection ConstantConditions
-        String updatedBody    = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, result.getBody(), messageMentions).getBody().toString();
-        String updatedSnippet = updateSnippetWithDisplayNames(result.getBody(), result.getBodySnippet(), messageMentions);
+          //noinspection ConstantConditions
+          String updatedBody    = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, result.getBody(), messageMentions).getBody().toString();
+          String updatedSnippet = updateSnippetWithDisplayNames(result.getBody(), result.getBodySnippet(), messageMentions);
 
-        //noinspection ConstantConditions
-        updatedResults.add(new MessageResult(result.getConversationRecipient(), result.getMessageRecipient(), updatedBody, updatedSnippet, result.getThreadId(), result.getMessageId(), result.getReceivedTimestampMs(), result.isMms()));
-      } else {
-        updatedResults.add(result);
+          //noinspection ConstantConditions
+          updatedResults.add(new MessageResult(result.getConversationRecipient(), result.getMessageRecipient(), updatedBody, updatedSnippet, result.getThreadId(), result.getMessageId(), result.getReceivedTimestampMs(), result.isMms()));
+        } else {
+          updatedResults.add(result);
+        }
       }
     }
 

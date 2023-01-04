@@ -96,6 +96,10 @@ sealed class ConversationSettingsViewModel(
 
   abstract fun setMuteUntil(muteUntil: Long)
 
+  abstract fun setExtraSecure(extraSecure: Boolean)
+
+  abstract fun setExtraSecureKey(extraSecureKey: String)
+
   abstract fun unmute()
 
   abstract fun block()
@@ -235,6 +239,14 @@ sealed class ConversationSettingsViewModel(
 
     override fun setMuteUntil(muteUntil: Long) {
       repository.setMuteUntil(recipientId, muteUntil)
+    }
+
+    override fun setExtraSecure(extraSecure: Boolean) {
+      repository.setExtraSecure(recipientId, extraSecure)
+    }
+
+    override fun setExtraSecureKey(extraSecureKey: String) {
+      repository.setExtraSecureKey(recipientId, extraSecureKey)
     }
 
     override fun unmute() {
@@ -451,6 +463,14 @@ sealed class ConversationSettingsViewModel(
 
     override fun setMuteUntil(muteUntil: Long) {
       repository.setMuteUntil(groupId, muteUntil)
+    }
+
+    override fun setExtraSecure(extraSecure: Boolean) {
+      repository.setExtraSecure(groupId, extraSecure)
+    }
+
+    override fun setExtraSecureKey(extraSecureKey: String) {
+      repository.setExtraSecureKey(groupId, extraSecureKey)
     }
 
     override fun unmute() {

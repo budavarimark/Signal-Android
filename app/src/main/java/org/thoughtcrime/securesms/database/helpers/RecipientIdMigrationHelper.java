@@ -148,6 +148,8 @@ public class RecipientIdMigrationHelper {
                                        "signal_profile_avatar TEXT DEFAULT NULL, " +
                                        "profile_sharing INTEGER DEFAULT 0, " +
                                        "unidentified_access_mode INTEGER DEFAULT 0, " +
+                                       "extra_secure INTEGER DEFAULT 0, " +
+                                       "extra_secure_key TEXT DEFAULT '', " +
                                        "force_sms_selection INTEGER DEFAULT 0)");
 
     try (Cursor cursor = db.query("recipient_preferences", null, null, null, null, null, null)) {
@@ -186,6 +188,8 @@ public class RecipientIdMigrationHelper {
         values.put("profile_sharing", cursor.getInt(cursor.getColumnIndexOrThrow("profile_sharing_approval")));
         values.put("unidentified_access_mode", cursor.getInt(cursor.getColumnIndexOrThrow("unidentified_access_mode")));
         values.put("force_sms_selection", cursor.getInt(cursor.getColumnIndexOrThrow("force_sms_selection")));
+        values.put("extra_secure", cursor.getInt(cursor.getColumnIndexOrThrow("extra_secure")));
+        values.put("extra_secure_key", cursor.getString(cursor.getColumnIndexOrThrow("extra_secure_key")));
 
         db.insert("recipient", null, values);
       }

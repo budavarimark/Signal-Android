@@ -79,7 +79,9 @@ data class RecipientRecord(
   val badges: List<Badge>,
   @get:JvmName("needsPniSignature")
   val needsPniSignature: Boolean,
-  val isHidden: Boolean
+  val isHidden: Boolean,
+  val isExtraSecure: Boolean,
+  val extraSecureKey: String?,
 ) {
 
   fun getDefaultSubscriptionId(): Optional<Int> {
@@ -101,6 +103,10 @@ data class RecipientRecord(
   fun pniAndAci(): Boolean {
     return this.serviceId != null && this.pni != null && this.serviceId != this.pni
   }
+
+  /*fun extraSecureKey(): String {
+    return this.extraSecureKey
+  }*/
 
   /**
    * A bundle of data that's only necessary when syncing to storage service, not for a

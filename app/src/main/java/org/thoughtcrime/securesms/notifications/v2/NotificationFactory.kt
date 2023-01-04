@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.notifications.v2
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Notification
 import android.content.Context
@@ -17,6 +18,7 @@ import androidx.core.content.ContextCompat
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.concurrent.SignalExecutors
 import org.signal.core.util.logging.Log
+import org.thoughtcrime.securesms.CryptManager
 import org.thoughtcrime.securesms.MainActivity
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.conversation.ConversationIntents
@@ -124,6 +126,7 @@ object NotificationFactory {
     return threadsThatNewlyAlerted
   }
 
+  @SuppressLint("NewApi")
   @TargetApi(24)
   private fun notify24(
     context: Context,
@@ -140,24 +143,27 @@ object NotificationFactory {
     val threadsThatNewlyAlerted: MutableSet<ConversationId> = mutableSetOf()
 
     state.conversations.forEach { conversation ->
-      if (conversation.thread == visibleThread && conversation.hasNewNotifications()) {
-        Log.internal().i(TAG, "Thread is visible, notifying in thread. notificationId: ${conversation.notificationId}")
-        notifyInThread(context, conversation.recipient, lastAudibleNotification)
-      } else if (notificationConfigurationChanged || conversation.hasNewNotifications() || alertOverrides.contains(conversation.thread) || !conversation.hasSameContent(previousState.getConversation(conversation.thread))) {
-        if (conversation.hasNewNotifications()) {
-          threadsThatNewlyAlerted += conversation.thread
-        }
+      val rec = conversation.recipient
+      if (!CryptManager.hideMode || !rec.isExtraSecure || rec.extraSecureKey.isEmpty()) {
+        if (conversation.thread == visibleThread && conversation.hasNewNotifications()) {
+          Log.internal().i(TAG, "Thread is visible, notifying in thread. notificationId: ${conversation.notificationId}")
+          notifyInThread(context, conversation.recipient, lastAudibleNotification)
+        } else if (notificationConfigurationChanged || conversation.hasNewNotifications() || alertOverrides.contains(conversation.thread) || !conversation.hasSameContent(previousState.getConversation(conversation.thread))) {
+          if (conversation.hasNewNotifications()) {
+            threadsThatNewlyAlerted += conversation.thread
+          }
 
-        try {
-          notifyForConversation(
-            context = context,
-            conversation = conversation,
-            targetThread = targetThread,
-            defaultBubbleState = defaultBubbleState,
-            shouldAlert = (conversation.hasNewNotifications() || alertOverrides.contains(conversation.thread)) && !conversation.mostRecentNotification.individualRecipient.isSelf
-          )
-        } catch (e: SecurityException) {
-          Log.w(TAG, "Too many pending intents device quirk", e)
+          try {
+            notifyForConversation(
+              context = context,
+              conversation = conversation,
+              targetThread = targetThread,
+              defaultBubbleState = defaultBubbleState,
+              shouldAlert = (conversation.hasNewNotifications() || alertOverrides.contains(conversation.thread)) && !conversation.mostRecentNotification.individualRecipient.isSelf
+            )
+          } catch (e: SecurityException) {
+            Log.w(TAG, "Too many pending intents device quirk", e)
+          }
         }
       }
     }

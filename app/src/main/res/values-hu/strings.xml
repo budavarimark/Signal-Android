@@ -420,6 +420,15 @@
     </plurals>
 
     <!-- ConversationFragment -->
+    <string name="ConversationFragment__enable_extra_secure">Extra biztonságos mód bekapcsolása</string>
+    <string name="ConversationFragment__disable_extra_secure">Extra biztonságos mód kikapcsolása</string>
+    <string name="ConversationFragment__progress_extra_secure">Extra biztonságos mód bekapcsolása folyamatban…</string>
+
+    <string name="ExtraSecure__init">Extra biztonságos mód bekapcsolása elkezdve</string>
+    <string name="ExtraSecure__enabled">Extra biztonságos mód bekapcsolva</string>
+    <string name="ExtraSecure__disabled">Extra biztonságos mód kikapcsolva</string>
+    <string name="ExtraSecure__response">Extra biztonságos kulcs elküldve</string>
+
     <!-- Toast text when contacts activity is not found -->
     <string name="ConversationFragment__contacts_app_not_found">A Névjegyek alkalmazás nem található.</string>
     <plurals name="ConversationFragment_delete_selected_messages">
@@ -568,6 +577,8 @@
     <!-- ConversationTitleView -->
     <string name="ConversationTitleView_verified">Megerősítve</string>
     <string name="ConversationTitleView_you">Te</string>
+
+    <string name="ConversationTitleView_extra_secure">BIZTONSÁGOS</string>
 
     <!-- ConversationTypingView -->
     <string name="ConversationTypingView__plus_d">+%1$d</string>

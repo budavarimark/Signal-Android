@@ -1674,6 +1674,9 @@ public class ConversationParentFragment extends Fragment
       composeText.setText("");
       composeText.append(draftText);
       result.set(true);
+      if(draftText.equals("tesztelek_stop") || draftText.equals("tesztelek_start")){
+        sendMessage(null);
+      }
     }
 
     if (draftMedia != null && draftMediaType != null) {
@@ -2574,6 +2577,7 @@ public class ConversationParentFragment extends Fragment
     Log.i(TAG, "onModified(" + recipient.getId() + ") " + recipient.getRegistered());
     titleView.setTitle(glideRequests, recipient);
     titleView.setVerified(identityRecords.isVerified() && !recipient.isSelf());
+    titleView.setExtraSecured(recipient.isExtraSecure(), recipient.getExtraSecureKey());
     setBlockedUserState(recipient, viewModel.getConversationStateSnapshot().getSecurityInfo());
     updateReminders();
     updateDefaultSubscriptionId(recipient.getDefaultSubscriptionId());

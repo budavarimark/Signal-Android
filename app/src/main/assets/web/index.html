@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+		 .copyButton {
+		  width: 100%;
+			height: 51px;
+            color: white;
+
+            box-shadow: grey;
+			border: none;
+			border: 2px solid #fff;
+			margin: auto;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0;
+			background: none;
+			color: #fff;
+
+			text-transform: uppercase;
+			font-family: "Montserrat-SemiBold";
+        }
+		</style>
+
+  <script>
+		function copyToClipboard() {
+			let toCopy = document.getElementById("ownCode").value;
+
+		  navigator.clipboard.writeText(toCopy).then(
+			v => alert("Sikeresen másolva"),
+			e => alert("Hiba történt\n" + e));
+
+		  NativeAndroid.copyToClipboard(toCopy);
+		}
+
+		function getCode(){
+			document.getElementById("ownCode").value = NativeAndroid.getOwnCode();
+		}
+
+		window.addEventListener('load', function () {
+		  getCode()
+		})
+
+		</script>
+</head>
+
+<body>
+
+<div class="wrapper">
+  <div class="inner">
+    <form action="">
+      <h3>AKTIVÁLÁS</h3>
+      <p>Kérem adja meg az alábbi kulcsot az utasításban szereplő weboldalon, majd másolja be ide a kapott kulcsot.</p>
+      <label class="form-group">
+        <textarea name="" id="ownCode" required="" rows="4" style=" width:100%;max-width:100%;color:#000000;" disabled></textarea>
+        <input type="button" class="copyButton" value="Másolás" onclick="copyToClipboard()">
+        <span class="border"></span>
+      </label>
+
+      <label class="form-group">
+        <input type="text" class="form-control"  required>
+        <span>Kapott aktiváló kulcs</span>
+        <span class="border"></span>
+      </label>
+      <button>AKTIVÁLÁS</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

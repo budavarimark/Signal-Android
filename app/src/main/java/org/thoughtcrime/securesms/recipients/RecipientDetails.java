@@ -84,6 +84,8 @@ public class RecipientDetails {
   final List<Badge>                  badges;
   final boolean                      isReleaseChannel;
   final boolean                      needsPniSignature;
+  final boolean isExtraSecure;
+  final String                       extraSecureKey;
 
   public RecipientDetails(@Nullable String groupName,
                           @Nullable String systemContactName,
@@ -145,6 +147,8 @@ public class RecipientDetails {
     this.badges                       = record.getBadges();
     this.isReleaseChannel             = isReleaseChannel;
     this.needsPniSignature            = record.needsPniSignature();
+    this.isExtraSecure                = record.isExtraSecure();
+    this.extraSecureKey               = record.getExtraSecureKey();
   }
 
   private RecipientDetails() {
@@ -198,6 +202,8 @@ public class RecipientDetails {
     this.badges                       = Collections.emptyList();
     this.isReleaseChannel             = false;
     this.needsPniSignature            = false;
+    this.isExtraSecure                = false;
+    this.extraSecureKey               = "";
   }
 
   public static @NonNull RecipientDetails forIndividual(@NonNull Context context, @NonNull RecipientRecord settings) {

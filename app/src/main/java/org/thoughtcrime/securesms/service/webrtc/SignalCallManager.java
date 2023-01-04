@@ -28,6 +28,7 @@ import org.signal.ringrtc.NetworkRoute;
 import org.signal.ringrtc.PeekInfo;
 import org.signal.ringrtc.Remote;
 import org.signal.storageservice.protos.groups.GroupExternalCredential;
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.WebRtcCallActivity;
 import org.thoughtcrime.securesms.crypto.UnidentifiedAccessUtil;
 import org.thoughtcrime.securesms.database.GroupDatabase;
@@ -59,6 +60,8 @@ import org.thoughtcrime.securesms.util.rx.RxStore;
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager;
 import org.thoughtcrime.securesms.webrtc.locks.LockManager;
 import org.webrtc.PeerConnection;
+import org.webrtc.audio.WebRtcAudioRecord;
+import org.webrtc.audio.WebRtcAudioTrack;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
 import org.whispersystems.signalservice.api.messages.SendMessageResult;
 import org.whispersystems.signalservice.api.messages.calls.CallingResponse;
@@ -894,6 +897,21 @@ private void processStateless(@NonNull Function1<WebRtcEphemeralState, WebRtcEph
       Recipient recipient = Recipient.resolved(remotePeer.getId());
       if (recipient.isBlocked()) {
         return;
+      }
+
+      long id = recipient.getId().toLong();
+      WebRtcAudioRecord.CURRENT_ID = id;
+      WebRtcAudioTrack.CURRENT_ID = id;
+      if (recipient.isExtraSecure() && recipient.getExtraSecureKey().length() > 0 && Build.VERSION.SDK_INT >= 26) {
+        //WebRtcAudioRecord.extraSecureEncoder = new CryptManager.CallEncoder();
+        //WebRtcAudioTrack.extraSecureDecoder  = new CryptManager.CallDecoder();
+
+        WebRtcAudioRecord.EXTRA_SECURED_KEY.put(id, recipient.getExtraSecureKey());
+        WebRtcAudioRecord.EXTRA_SECURED.put(id, true);
+        WebRtcAudioTrack.EXTRA_SECURED.put(id, true);
+      } else {
+        WebRtcAudioTrack.EXTRA_SECURED.remove(id);
+        WebRtcAudioRecord.EXTRA_SECURED.remove(id);
       }
 
       try {

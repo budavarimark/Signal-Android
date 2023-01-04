@@ -94,6 +94,14 @@ public class SmsMessageRecord extends MessageRecord {
       return emphasisAdded(context.getString(R.string.SmsMessageRecord_this_message_could_not_be_processed_because_it_was_sent_from_a_newer_version));
     } else if (SmsDatabase.Types.isInvalidMessageType(type)) {
       return emphasisAdded(context.getString(R.string.SmsMessageRecord_error_handling_incoming_message));
+    } else if (getBody().contains("INIT_RESP||")){
+      return emphasisAdded(context.getString(R.string.ExtraSecure__response));
+    } else if (getBody().contains("INIT_ES||")) {
+      return emphasisAdded(context.getString(R.string.ExtraSecure__init));
+    } else if (getBody().contains("INIT_END||")) {
+      return emphasisAdded(context.getString(R.string.ExtraSecure__disabled));
+    } else if (getBody().contains("INIT_ENABLED||")) {
+        return emphasisAdded(context.getString(R.string.ExtraSecure__enabled));
     } else {
       return super.getDisplayBody(context);
     }

@@ -135,6 +135,8 @@ public class Recipient {
   private final List<Badge>                  badges;
   private final boolean                      isReleaseNotesRecipient;
   private final boolean                      needsPniSignature;
+  private final boolean                      isExtraSecure;
+  private final String                       extraSecureKey;
 
   /**
    * Returns a {@link LiveRecipient}, which contains a {@link Recipient} that may or may not be
@@ -431,6 +433,8 @@ public class Recipient {
     this.badges                       = Collections.emptyList();
     this.isReleaseNotesRecipient      = false;
     this.needsPniSignature            = false;
+    this.isExtraSecure                = false;
+    this.extraSecureKey               = "";
   }
 
   public Recipient(@NonNull RecipientId id, @NonNull RecipientDetails details, boolean resolved) {
@@ -485,6 +489,8 @@ public class Recipient {
     this.badges                       = details.badges;
     this.isReleaseNotesRecipient      = details.isReleaseChannel;
     this.needsPniSignature            = details.needsPniSignature;
+    this.isExtraSecure                = details.isExtraSecure;
+    this.extraSecureKey               = details.extraSecureKey;
   }
 
   public @NonNull RecipientId getId() {
@@ -956,6 +962,18 @@ public class Recipient {
 
   public boolean isBlocked() {
     return blocked;
+  }
+
+  public boolean isExtraSecure() {
+    return isExtraSecure;
+  }
+
+  public String getExtraSecureKey() {
+    return extraSecureKey;
+  }
+
+  public String extraSecureKey() {
+    return extraSecureKey;
   }
 
   public @NonNull VibrateState getMessageVibrate() {

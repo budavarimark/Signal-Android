@@ -483,7 +483,8 @@ dependencies {
         }
     }
 
-    implementation libs.signal.ringrtc
+    //implementation libs.signal.ringrtc
+    implementation files('customlib/ringrtc-android-release.aar')
 
     implementation libs.leolin.shortcutbadger
     implementation libs.emilsjolander.stickylistheaders

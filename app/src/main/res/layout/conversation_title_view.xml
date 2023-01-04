@@ -64,6 +64,19 @@
             tools:ignore="UnusedAttribute"
             tools:text="J. Jonah Jameson" />
 
+        <TextView
+            android:id="@+id/extraSecure"
+            style="@style/Signal.Text.BodySmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:text="@string/ConversationTitleView_extra_secure"
+            android:textColor="@color/conversation_forest_shade"
+            android:visibility="gone"
+            android:textDirection="ltr" />
+
         <LinearLayout
             android:id="@+id/subtitle_container"
             android:layout_width="wrap_content"

@@ -127,6 +127,18 @@ class ConversationSettingsRepository(
     }
   }
 
+  fun setExtraSecure(recipientId: RecipientId, extraSecure: Boolean) {
+    SignalExecutors.BOUNDED.execute {
+      SignalDatabase.recipients.setExtraSecure(recipientId, extraSecure)
+    }
+  }
+
+  fun setExtraSecureKey(recipientId: RecipientId, extraSecureKey: String) {
+    SignalExecutors.BOUNDED.execute {
+      SignalDatabase.recipients.setExtraSecureKey(recipientId, extraSecureKey)
+    }
+  }
+
   fun getGroupCapacity(groupId: GroupId, consumer: (GroupCapacityResult) -> Unit) {
     SignalExecutors.BOUNDED.execute {
       val groupRecord: GroupDatabase.GroupRecord = SignalDatabase.groups.getGroup(groupId).get()
@@ -158,6 +170,20 @@ class ConversationSettingsRepository(
     SignalExecutors.BOUNDED.execute {
       val recipientId = Recipient.externalGroupExact(groupId).id
       SignalDatabase.recipients.setMuted(recipientId, until)
+    }
+  }
+
+  fun setExtraSecure(groupId: GroupId, extraSecure: Boolean) {
+    SignalExecutors.BOUNDED.execute {
+      val recipientId = Recipient.externalGroupExact(groupId).id
+      SignalDatabase.recipients.setExtraSecure(recipientId, extraSecure)
+    }
+  }
+
+  fun setExtraSecureKey(groupId: GroupId, extraSecureKey: String) {
+    SignalExecutors.BOUNDED.execute {
+      val recipientId = Recipient.externalGroupExact(groupId).id
+      SignalDatabase.recipients.setExtraSecureKey(recipientId, extraSecureKey)
     }
   }
 

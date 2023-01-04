@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.jobs;
 import androidx.annotation.NonNull;
 
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.crypto.UnidentifiedAccessUtil;
 import org.thoughtcrime.securesms.database.MessageDatabase;
 import org.thoughtcrime.securesms.database.MessageDatabase.SyncMessageId;
@@ -180,9 +181,32 @@ public class PushTextSendJob extends PushSendJob {
 
       log(TAG, String.valueOf(message.getDateSent()), "Have access key to use: " + unidentifiedAccess.isPresent());
 
+      String msg = null;
+      String msgBody = message.getBody();
+      if (android.os.Build.VERSION.SDK_INT >= 26 &&
+          messageRecipient.isExtraSecure() &&
+          messageRecipient.getExtraSecureKey().length() > 0 &&
+          !msgBody.contains("INIT_ES||") &&
+          !msgBody.contains("INIT_RESP||") &&
+          !msgBody.contains("INIT_ENABLED||") &&
+          !msgBody.contains("INIT_END||")
+          ) {
+        String encrypted = CryptManager.encryptManager(messageRecipient.getExtraSecureKey(), message.getBody());
+        if (encrypted.equals("")) {
+          msg = message.getBody();
+        } else {
+          msg = encrypted;
+        }
+      //}else if(){
+
+      }else{
+        msg = message.getBody();
+      }
+
       SignalServiceDataMessage textSecureMessage = SignalServiceDataMessage.newBuilder()
                                                                            .withTimestamp(message.getDateSent())
-                                                                           .withBody(message.getBody())
+                                                                           //.withBody(message.getBody())
+                                                                           .withBody(msg)
                                                                            .withExpiration((int)(message.getExpiresIn() / 1000))
                                                                            .withProfileKey(profileKey.orElse(null))
                                                                            .asEndSessionMessage(message.isEndSession())
@@ -213,6 +237,8 @@ public class PushTextSendJob extends PushSendJob {
       throw new InsecureFallbackApprovalException(e);
     } catch (ServerRejectedException e) {
       throw new UndeliverableMessageException(e);
+    } catch (Exception e){
+      throw new UndeliverableMessageException("not registered!");
     }
   }
 

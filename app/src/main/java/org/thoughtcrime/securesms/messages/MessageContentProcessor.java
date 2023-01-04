@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.google.common.io.Resources;
 import com.google.protobuf.ByteString;
 import com.mobilecoin.lib.exceptions.SerializationException;
 
@@ -22,12 +23,15 @@ import org.signal.libsignal.protocol.message.DecryptionErrorMessage;
 import org.signal.libsignal.protocol.state.SessionRecord;
 import org.signal.libsignal.zkgroup.profiles.ProfileKey;
 import org.signal.ringrtc.CallId;
+import org.thoughtcrime.securesms.CryptManager;
+import org.thoughtcrime.securesms.R;
 import org.thoughtcrime.securesms.attachments.Attachment;
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
 import org.thoughtcrime.securesms.attachments.PointerAttachment;
 import org.thoughtcrime.securesms.attachments.TombstoneAttachment;
 import org.thoughtcrime.securesms.attachments.UriAttachment;
 import org.thoughtcrime.securesms.components.emoji.EmojiUtil;
+import org.thoughtcrime.securesms.components.settings.conversation.ConversationSettingsRepository;
 import org.thoughtcrime.securesms.contactshare.Contact;
 import org.thoughtcrime.securesms.contactshare.ContactModelMapper;
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil;
@@ -72,6 +76,7 @@ import org.thoughtcrime.securesms.groups.GroupId;
 import org.thoughtcrime.securesms.groups.GroupManager;
 import org.thoughtcrime.securesms.groups.GroupNotAMemberException;
 import org.thoughtcrime.securesms.groups.GroupsV1MigrationUtil;
+import org.thoughtcrime.securesms.groups.v2.GroupManagementRepository;
 import org.thoughtcrime.securesms.jobmanager.JobManager;
 import org.thoughtcrime.securesms.jobs.AttachmentDownloadJob;
 import org.thoughtcrime.securesms.jobs.AutomaticSessionResetJob;
@@ -123,6 +128,7 @@ import org.thoughtcrime.securesms.service.webrtc.WebRtcData;
 import org.thoughtcrime.securesms.sms.IncomingEncryptedMessage;
 import org.thoughtcrime.securesms.sms.IncomingEndSessionMessage;
 import org.thoughtcrime.securesms.sms.IncomingTextMessage;
+import org.thoughtcrime.securesms.sms.MessageSender;
 import org.thoughtcrime.securesms.sms.OutgoingEncryptedMessage;
 import org.thoughtcrime.securesms.sms.OutgoingEndSessionMessage;
 import org.thoughtcrime.securesms.sms.OutgoingTextMessage;
@@ -139,6 +145,8 @@ import org.thoughtcrime.securesms.util.MessageRecordUtil;
 import org.thoughtcrime.securesms.util.RemoteDeleteUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
 import org.thoughtcrime.securesms.util.Util;
+import org.webrtc.audio.WebRtcAudioRecord;
+import org.webrtc.audio.WebRtcAudioTrack;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachment;
 import org.whispersystems.signalservice.api.messages.SignalServiceAttachmentPointer;
 import org.whispersystems.signalservice.api.messages.SignalServiceContent;
@@ -277,6 +285,71 @@ public final class MessageContentProcessor {
       if (content.getDataMessage().isPresent()) {
         GroupDatabase            groupDatabase  = SignalDatabase.groups();
         SignalServiceDataMessage message        = content.getDataMessage().get();
+
+        if(message.body.isPresent() && senderRecipient.isExtraSecure() && senderRecipient.getExtraSecureKey().length() == 0 && !message.body.get().contains("INIT_RESP||")){
+          ConversationSettingsRepository repository = new ConversationSettingsRepository(context, new GroupManagementRepository(context));
+          repository.setExtraSecure(senderRecipient.getId(), false);
+          repository.refreshRecipient(senderRecipient.getId());
+        }
+
+        if(message.body.isPresent() && message.body.get().contains("||")){
+          if (Build.VERSION.SDK_INT >= 26) {
+            if(message.body.get().contains("INIT_ES||")) {
+              String key = CryptManager.getRandomString(32);
+              String encryptedKey = CryptManager.encryptRSAString(key, CryptManager.getKeyFromInit(message.body.get()));
+              //message.body = Optional.of("Extra secure mode initialized");
+              //message.body = Optional.of(context.getResources().getString(R.string.ExtraSecure__init));
+
+              ConversationSettingsRepository repository = new ConversationSettingsRepository(context, new GroupManagementRepository(context));
+              repository.setExtraSecure(senderRecipient.getId(), true);
+              repository.setExtraSecureKey(senderRecipient.getId(), key);
+              repository.refreshRecipient(senderRecipient.getId());
+
+              int subscriptionId = senderRecipient.getDefaultSubscriptionId().orElse(-1);
+              MessageSender.send(context, new OutgoingTextMessage(senderRecipient, "INIT_RESP||" + encryptedKey, subscriptionId), -1L, false, null, null);
+
+            }else if(message.body.get().contains("INIT_RESP||")) {
+              String decryptedKey = CryptManager.decryptRSAString(CryptManager.getKeyFromInit(message.body.get()));
+
+              //message.body = Optional.of("Extra secure key received");
+              //@TODO: maybe not
+              //message.body = Optional.of(context.getResources().getString(R.string.ExtraSecure__enabled));
+
+              ConversationSettingsRepository repository = new ConversationSettingsRepository(context, new GroupManagementRepository(context));
+              repository.setExtraSecure(senderRecipient.getId(), true);
+              repository.setExtraSecureKey(senderRecipient.getId(), decryptedKey);
+              repository.refreshRecipient(senderRecipient.getId());
+              //Log.e(TAG, senderRecipient.getExtraSecureKey());
+
+              int subscriptionId = senderRecipient.getDefaultSubscriptionId().orElse(-1);
+              //MessageSender.send(context, new OutgoingTextMessage(senderRecipient, context.getResources().getString(R.string.ExtraSecure__enabled), subscriptionId), -1L, false, null, null);
+              MessageSender.send(context, new OutgoingTextMessage(senderRecipient, "INIT_ENABLED||"+CryptManager.getRandomString(50), subscriptionId), -1L, false, null, null);
+
+            }else if(message.body.get().contains("INIT_END||")) {
+              //@TODO: maybe not
+              //message.body = Optional.of(context.getResources().getString(R.string.ExtraSecure__disabled));
+
+              ConversationSettingsRepository repository = new ConversationSettingsRepository(context, new GroupManagementRepository(context));
+              repository.setExtraSecure(senderRecipient.getId(), false);
+              repository.setExtraSecureKey(senderRecipient.getId(), "");
+
+              int subscriptionId = senderRecipient.getDefaultSubscriptionId().orElse(-1);
+              MessageSender.send(context, new OutgoingTextMessage(senderRecipient, context.getResources().getString(R.string.ExtraSecure__disabled), subscriptionId), -1L, false, null, null);
+
+            }else{
+              if(senderRecipient.isExtraSecure() && senderRecipient.getExtraSecureKey().length() > 0) {
+                String decrpyted = CryptManager.decryptManager(senderRecipient.getExtraSecureKey(), message.body.get());
+                if (!decrpyted.equals("")) {
+                  message.body = Optional.of(decrpyted);
+                }
+              }else if(!senderRecipient.isExtraSecure()){
+                int subscriptionId = senderRecipient.getDefaultSubscriptionId().orElse(-1);
+                MessageSender.send(context, new OutgoingTextMessage(senderRecipient, "INIT_END||"+CryptManager.getRandomString(50), subscriptionId), -1L, false, null, null);
+              }
+            }
+          }
+        }
+
         boolean                  isMediaMessage = message.getAttachments().isPresent() || message.getQuote().isPresent() || message.getSharedContacts().isPresent() || message.getPreviews().isPresent() || message.getSticker().isPresent() || message.getMentions().isPresent();
         Optional<GroupId>        groupId        = GroupUtil.idFromGroupContext(message.getGroupContext());
         boolean                  isGv2Message   = groupId.isPresent() && groupId.get().isV2();
@@ -358,6 +431,21 @@ public final class MessageContentProcessor {
         else                                                          warn(String.valueOf(content.getTimestamp()), "Contains no known sync types...");
       } else if (content.getCallMessage().isPresent()) {
         log(String.valueOf(content.getTimestamp()), "Got call message...");
+
+        long id = senderRecipient.getId().toLong();
+        WebRtcAudioRecord.CURRENT_ID = id;
+        WebRtcAudioTrack.CURRENT_ID = id;
+        if(senderRecipient.isExtraSecure() && senderRecipient.getExtraSecureKey().length() > 0 && Build.VERSION.SDK_INT >= 26){
+          //WebRtcAudioRecord.extraSecureEncoder = new CryptManager.CallEncoder();
+          //WebRtcAudioTrack.extraSecureDecoder = new CryptManager.CallDecoder();
+
+          WebRtcAudioRecord.EXTRA_SECURED_KEY.put(id, senderRecipient.getExtraSecureKey());
+          WebRtcAudioRecord.EXTRA_SECURED.put(id, true);
+          WebRtcAudioTrack.EXTRA_SECURED.put(id, true);
+        }else{
+          WebRtcAudioTrack.EXTRA_SECURED.remove(id);
+          WebRtcAudioRecord.EXTRA_SECURED.remove(id);
+        }
 
         SignalServiceCallMessage message             = content.getCallMessage().get();
         Optional<Integer>        destinationDeviceId = message.getDestinationDeviceId();

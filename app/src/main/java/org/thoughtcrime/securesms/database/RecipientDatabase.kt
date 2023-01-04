@@ -184,6 +184,8 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
     private const val NEEDS_PNI_SIGNATURE = "needs_pni_signature"
     private const val UNREGISTERED_TIMESTAMP = "unregistered_timestamp"
     private const val HIDDEN = "hidden"
+    private const val EXTRA_SECURE = "extra_secure"
+    private const val EXTRA_SECURE_KEY = "extra_secure_key"
 
     @JvmField
     val CREATE_TABLE =
@@ -244,7 +246,9 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
         $DISTRIBUTION_LIST_ID INTEGER DEFAULT NULL,
         $NEEDS_PNI_SIGNATURE INTEGER DEFAULT 0,
         $UNREGISTERED_TIMESTAMP INTEGER DEFAULT 0,
-        $HIDDEN INTEGER DEFAULT 0
+        $HIDDEN INTEGER DEFAULT 0,
+        $EXTRA_SECURE INTEGER DEFAULT 0,
+        $EXTRA_SECURE_KEY TEXT DEFAULT ''
       )
       """.trimIndent()
 
@@ -306,7 +310,9 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
       BADGES,
       DISTRIBUTION_LIST_ID,
       NEEDS_PNI_SIGNATURE,
-      HIDDEN
+      HIDDEN,
+      EXTRA_SECURE,
+      EXTRA_SECURE_KEY
     )
 
     private val ID_PROJECTION = arrayOf(ID)
@@ -1423,6 +1429,32 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
   fun setMuted(id: RecipientId, until: Long) {
     val values = ContentValues().apply {
       put(MUTE_UNTIL, until)
+    }
+
+    if (update(id, values)) {
+      rotateStorageId(id)
+      ApplicationDependencies.getDatabaseObserver().notifyRecipientChanged(id)
+    }
+
+    StorageSyncHelper.scheduleSyncForDataChange()
+  }
+
+  fun setExtraSecure(id: RecipientId, extraSecure: Boolean) {
+    val values = ContentValues().apply {
+      put(EXTRA_SECURE, extraSecure)
+    }
+
+    if (update(id, values)) {
+      rotateStorageId(id)
+      ApplicationDependencies.getDatabaseObserver().notifyRecipientChanged(id)
+    }
+
+    StorageSyncHelper.scheduleSyncForDataChange()
+  }
+
+  fun setExtraSecureKey(id: RecipientId, extraSecureKey: String) {
+    val values = ContentValues().apply {
+      put(EXTRA_SECURE_KEY, extraSecureKey)
     }
 
     if (update(id, values)) {
@@ -3908,7 +3940,9 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
       hasGroupsInCommon = cursor.requireBoolean(GROUPS_IN_COMMON),
       badges = parseBadgeList(cursor.requireBlob(BADGES)),
       needsPniSignature = cursor.requireBoolean(NEEDS_PNI_SIGNATURE),
-      isHidden = cursor.requireBoolean(HIDDEN)
+      isHidden = cursor.requireBoolean(HIDDEN),
+      isExtraSecure = cursor.requireBoolean(EXTRA_SECURE),
+      extraSecureKey = cursor.requireString(EXTRA_SECURE_KEY),
     )
   }
 

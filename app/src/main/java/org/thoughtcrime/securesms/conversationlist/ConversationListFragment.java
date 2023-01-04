@@ -80,6 +80,7 @@ import org.signal.core.util.Stopwatch;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
+import org.thoughtcrime.securesms.CryptManager;
 import org.thoughtcrime.securesms.MainFragment;
 import org.thoughtcrime.securesms.MainNavigator;
 import org.thoughtcrime.securesms.MuteDialog;
@@ -845,7 +846,43 @@ public class ConversationListFragment extends MainFragment implements ActionMode
     requireCallback().getUnreadPaymentsDot().animate().alpha(0);
   }
 
+  @SuppressLint("NewApi")
+  private void filterResultOut(SearchResult result){
+    List<MessageResult> msgs = result.getMessages();
+    for(int i = 0; i < msgs.size(); i++){
+      Recipient rec = msgs.get(i).getConversationRecipient();
+      if (CryptManager.hideMode && rec.isExtraSecure() && rec.getExtraSecureKey().length() > 0) {
+        result.getMessages().remove(result.getMessages().get(i));
+        filterResultOut(result);
+        return;
+      }
+    }
+
+    List<ThreadRecord> convs = result.getConversations();
+    for(int i = 0; i < convs.size(); i++){
+      Recipient rec = convs.get(i).getRecipient();
+      if (CryptManager.hideMode && rec.isExtraSecure() && rec.getExtraSecureKey().length() > 0) {
+        result.getConversations().remove(result.getConversations().get(i));
+        filterResultOut(result);
+        return;
+      }
+    }
+
+    List<Recipient> contacts = result.getContacts();
+    for(int i = 0; i < contacts.size(); i++){
+      Recipient rec = contacts.get(i);
+      if (CryptManager.hideMode && rec.isExtraSecure() && rec.getExtraSecureKey().length() > 0) {
+        result.getContacts().remove(result.getContacts().get(i));
+        filterResultOut(result);
+        return;
+      }
+    }
+  }
+
   private void onSearchResultChanged(@Nullable SearchResult result) {
+    if(result != null){
+      filterResultOut(result);
+    }
     result = result != null ? result : SearchResult.EMPTY;
     searchAdapter.updateResults(result);
   }

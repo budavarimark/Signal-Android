@@ -62,7 +62,8 @@ public class RecipientUtil {
     recipient = recipient.resolve();
 
     if (!recipient.getServiceId().isPresent() && !recipient.getE164().isPresent()) {
-      throw new AssertionError(recipient.getId() + " - No UUID or phone number!");
+      //throw new AssertionError(recipient.getId() + " - No UUID or phone number!");
+      throw new NotFoundException(recipient.getId() + " is not registered!");
     }
 
     if (!recipient.getServiceId().isPresent()) {

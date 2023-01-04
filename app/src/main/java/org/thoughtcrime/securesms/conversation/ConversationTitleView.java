@@ -45,6 +45,7 @@ public class ConversationTitleView extends RelativeLayout {
   private View            expirationBadgeContainer;
   private TextView        expirationBadgeTime;
   private boolean         isSelf;
+  private TextView extraSecured;
 
   public ConversationTitleView(Context context) {
     this(context, null);
@@ -62,6 +63,7 @@ public class ConversationTitleView extends RelativeLayout {
     this.badge                    = findViewById(R.id.badge);
     this.subtitle                 = findViewById(R.id.subtitle);
     this.verified                 = findViewById(R.id.verified_indicator);
+    this.extraSecured             = findViewById(R.id.extraSecure);
     this.subtitleContainer        = findViewById(R.id.subtitle_container);
     this.verifiedSubtitle         = findViewById(R.id.verified_subtitle);
     this.avatar                   = findViewById(R.id.contact_photo_image);
@@ -170,6 +172,12 @@ public class ConversationTitleView extends RelativeLayout {
         performClick();
       }
     });
+  }
+
+  public void setExtraSecured(boolean extraSecure, String key) {
+    this.extraSecured.setVisibility(extraSecure && key.length() > 0 ? View.VISIBLE : View.GONE);
+
+    updateVerifiedSubtitleVisibility();
   }
 
   public void setVerified(boolean verified) {
